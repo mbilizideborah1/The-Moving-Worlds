@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Driftbound: The Moving Worlds</title>
+<style>
+:root{--ink:#17223b;--muted:#64708a;--paper:#fffdf8;--line:#dce3ed;--blue:#4776e6;--teal:#2aa88a;--gold:#f3b942;--coral:#ef6f79;--purple:#8b6ee8}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#e9f4ff,#f8f0ff);font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:var(--ink)}
+main{max-width:1150px;margin:auto;padding:18px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+h1{font-size:clamp(1.8rem,4vw,3rem);letter-spacing:-.05em;margin:0}.subtitle{margin:5px 0 16px;color:var(--muted)}
+.pill{background:white;border:1px solid var(--line);border-radius:99px;padding:7px 12px;font-weight:750}
+.layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(270px,.85fr);gap:14px;align-items:start}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:0 8px 24px #263e6510}
+.panel h2{font-size:1.1rem;margin:0 0 10px}.map{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.tile{min-height:118px;border:2px solid #e4e9f1;border-radius:14px;padding:8px;background:#f8fbff;position:relative;display:flex;flex-direction:column;gap:4px;cursor:pointer;text-align:left;color:var(--ink)}
+.tile:hover{border-color:var(--blue)}.tile.selected{border-color:var(--blue);box-shadow:0 0 0 3px #4776e625}.tile .emoji{font-size:1.6rem}.tile strong{font-size:.88rem}.tile small{font-size:.75rem;color:var(--muted);line-height:1.25}
+.tile .owner{position:absolute;right:6px;top:6px;font-size:.68rem;background:#fff;border:1px solid var(--line);border-radius:99px;padding:2px 5px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:12px 0}.stat{background:#f3f7ff;border-radius:12px;padding:8px;text-align:center}.stat small{display:block;color:var(--muted);font-size:.7rem}.stat b{font-size:1.05rem}
+.players{display:grid;gap:7px}.player{display:flex;align-items:center;gap:9px;padding:9px;border:1px solid var(--line);border-radius:12px;background:white}.player.active{border:2px solid var(--blue);background:#f1f5ff}.dot{width:13px;height:13px;border-radius:50%;flex:none}.player .info{flex:1}.player small{display:block;color:var(--muted)}.score{font-weight:850}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.action{border:1px solid var(--line);background:white;padding:10px;border-radius:12px;text-align:left;cursor:pointer;color:var(--ink);font:inherit}.action b{display:block;font-size:.9rem}.action small{display:block;color:var(--muted);font-size:.75rem;margin-top:3px}.action:hover{border-color:var(--blue)}.action.chosen{border:2px solid var(--blue);background:#f0f5ff}
+button.primary{background:var(--blue);color:white;border:0;border-radius:12px;padding:12px 16px;font:inherit;font-weight:800;cursor:pointer;width:100%;margin-top:9px}button.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font:inherit;font-weight:700;cursor:pointer}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.row>*{flex:1}.log{font-size:.84rem;line-height:1.45;max-height:155px;overflow:auto;display:flex;flex-direction:column-reverse;gap:6px}.log div{padding:7px 9px;background:#f3f7ff;border-radius:9px}
+.event{padding:12px;border-radius:13px;background:#fff4d7;border:1px solid #f3d98f;margin-bottom:12px}.event b{display:block;margin-bottom:3px}.event p{margin:0;font-size:.86rem;line-height:1.4}
+.note{font-size:.78rem;color:var(--muted);line-height:1.45;margin-top:12px}
+.overlay{position:fixed;inset:0;background:#15213bd9;display:flex;align-items:center;justify-content:center;padding:18px;z-index:10}.modal{background:#fffdf8;border-radius:22px;padding:22px;max-width:480px;width:100%;box-shadow:0 25px 80px #0004}.modal h2{margin:0 0 8px;font-size:1.7rem}.modal p{color:var(--muted);line-height:1.5}.modal label{display:block;font-weight:700;margin:12px 0 5px}.modal select,.modal input{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;font:inherit}
+@media(max-width:800px){.layout{grid-template-columns:1fr}.map{gap:6px}.tile{min-height:105px;padding:6px}.stats{grid-template-columns:repeat(4,1fr)}}@media(max-width:420px){main{padding:10px}.map{grid-template-columns:repeat(3,minmax(0,1fr))}.tile{min-height:105px}.actions{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<main>
+ <div class="top"><h1>🌌 Driftbound</h1><span class="pill">THE MOVING WORLDS</span></div>
+ <p class="subtitle">Build a world on a map that never stays still. Explore strange places, bend the current, and uncover the secret of the drifting sky.</p>
+ <div class="layout">
+  <section class="panel">
+   <div class="row" style="justify-content:space-between"><h2>🗺️ The drifting map</h2><span class="pill" id="roundPill">Round 1 / 8</span></div>
+   <div class="event" id="event"><b>🌠 The sky is quiet… for now</b><p>Choose a tile, then pick one action. The world shifts after every round.</p></div>
+   <div class="map" id="map"></div>
+   <div class="stats">
+    <div class="stat"><small>ROUND</small><b id="round">1 / 8</b></div>
+    <div class="stat"><small>SHARDS</small><b id="shards">3</b></div>
+    <div class="stat"><small>INSIGHT</small><b id="insight">0</b></div>
+    <div class="stat"><small>WORLD MOOD</small><b id="mood">Calm</b></div>
+   </div>
+   <p class="note">Special mechanic: at the end of each round, the Drift moves a row of the map. Tile types, discoveries, and player-built wonders create changing strategies.</p>
+  </section>
+  <aside class="panel">
+   <h2>👥 Explorers</h2><div class="players" id="players"></div>
+   <h2 style="margin-top:16px">🎯 Choose your action</h2>
+   <div class="actions" id="actions">
+    <button class="action chosen" data-action="harvest"><b>🌿 Harvest</b><small>Gain shards from the selected tile.</small></button>
+    <button class="action" data-action="build"><b>🏗️ Build</b><small>Spend shards to make a wonder.</small></button>
+    <button class="action" data-action="explore"><b>🔎 Explore</b><small>Reveal a mystery and gain insight.</small></button>
+    <button class="action" data-action="bend"><b>🌀 Bend the Drift</b><small>Spend insight to shift a tile.</small></button>
+   </div>
+   <button class="primary" id="takeTurn">Take Turn →</button>
+   <div class="row" style="margin-top:8px"><button class="secondary" id="newGame">New game</button><button class="secondary" id="rules">How to play</button></div>
+   <h2 style="margin-top:16px">📜 Island tales</h2><div class="log" id="log"></div>
+   <p class="note">Prototype supports 2–4 players passing one device. Online play requires a hosted multiplayer server; this file alone doesn't connect separate devices.</p>
+  </aside>
+ </div>
+</main>
+<div class="overlay" id="setup">
+ <div class="modal"><h2>Welcome to Driftbound</h2><p>A strategy game about building a world on shifting islands. Every choice changes what the next explorer can do.</p>
+ <label for="numPlayers">How many explorers?</label><select id="numPlayers"><option value="2">2 players</option><option value="3">3 players</option><option value="4">4 players</option></select>
+ <label for="names">Player names (optional, separated by commas)</label><input id="names" placeholder="Sky, River, Nova, Moss">
+ <button class="primary" id="begin">Create our world</button></div>
+</div>
+<script>
+(()=>{
+const $=id=>document.getElementById(id);
+const tileKinds=[
+ {name:'Glowgarden',emoji:'🌿',desc:'A lush place that grows shards.',yield:3,color:'#dff8e8'},
+ {name:'Glass Desert',emoji:'🏜️',desc:'Beautiful, risky, full of secrets.',yield:2,color:'#fff0d4'},
+ {name:'Echo Ruins',emoji:'🏛️',desc:'Old stones remember the past.',yield:1,color:'#ece7ff'},
+ {name:'Cloud Harbor',emoji:'☁️',desc:'Trade routes drift through here.',yield:2,color:'#e3f4ff'},
+ {name:'Starwell',emoji:'🌟',desc:'A rare well of insight.',yield:1,color:'#fff5c9'},
+ {name:'Wild Spiral',emoji:'🌀',desc:'The Drift is strongest here.',yield:2,color:'#ffe6ef'}
+];
+const colors=['#4776e6','#e76c7a','#2aa88a','#986ee7'];
+const defaultNames=['Sky','River','Nova','Moss'];
+let players=[],tiles=[],current=0,round=1,selected=0,action='harvest',insight=0,shards=3,mood='Calm',gameOver=false,logItems=[],secret=0;
+function rand(n){return Math.floor(Math.random()*n)}
+function makeTiles(){return Array.from({length:12},(_,i)=>({id:i,kind:rand(tileKinds.length),owner:-1,wonder:false,known:false,wealth:0}))}
+function setupGame(){
+ const n=Number($('numPlayers').value),names=$('names').value.split(',').map(s=>s.trim()).filter(Boolean);
+ players=Array.from({length:n},(_,i)=>({name:names[i]||defaultNames[i],color:colors[i],shards:3,insight:0,points:0,wonders:0,visited:[]}));tiles=makeTiles();current=0;round=1;selected=0;action='harvest';insight=0;shards=3;mood='Calm';gameOver=false;logItems=[];secret=rand(3);
+ addLog('The sky islands have appeared. Each explorer has a secret way to earn bonus points.');
+ addLog(players[current].name+' begins the journey.');$('setup').style.display='none';render();
+}
+function addLog(s){logItems.push(s);if(logItems.length>18)logItems.shift();$('log').innerHTML=logItems.map(x=>'<div>'+x+'</div>').reverse().join('')}
+function score(p){return p.points+p.wonders*3+p.insight+Math.floor(p.shards/2)}
+function tileLabel(t){return tileKinds[t.kind].name+(t.wonder?' ✨':'')}
+function renderMap(){
+ $('map').innerHTML=tiles.map((t,i)=>{let k=tileKinds[t.kind],owner=t.owner>=0?players[t.owner]:null;return `<button class="tile ${i===selected?'selected':''}" data-tile="${i}" style="background:${k.color}">${owner?`<span class="owner" style="color:${owner.color}">● ${owner.name}</span>`:''}<span class="emoji">${k.emoji}${t.wonder?'✨':''}</span><strong>${k.name}</strong><small>${t.wonder?'Player-built wonder':k.desc}</small></button>`}).join('');
+ document.querySelectorAll('[data-tile]').forEach(b=>b.onclick=()=>{selected=Number(b.dataset.tile);renderMap()});
+}
+function renderPlayers(){
+ $('players').innerHTML=players.map((p,i)=>`<div class="player ${i===current?'active':''}"><span class="dot" style="background:${p.color}"></span><div class="info"><b>${p.name}${i===current?' · Up now':''}</b><small>🪙 ${p.shards} shards · 🔮 ${p.insight} insight · ✨ ${p.wonders} wonders</small></div><span class="score">${score(p)} pts</span></div>`).join('');
+ $('round').textContent=round+' / 8';$('roundPill').textContent='Round '+round+' / 8';$('shards').textContent=players[current].shards;$('insight').textContent=players[current].insight;$('mood').textContent=mood;
+}
+function renderActions(){document.querySelectorAll('[data-action]').forEach(b=>b.classList.toggle('chosen',b.dataset.action===action));}
+function render(){renderMap();renderPlayers();renderActions();$('takeTurn').textContent=gameOver?'Game complete ✓':'Take Turn →';$('takeTurn').disabled=gameOver;}
+function setEvent(title,desc){$('event').innerHTML='<b>'+title+'</b><p>'+desc+'</p>'}
+function drift(){
+ // Rotate one row left/right, making the board literally change under players' plans.
+ const row=rand(3),dir=Math.random()<.5?'left':'right',start=row*4,arr=tiles.slice(start,start+4);
+ if(dir==='left')arr.push(arr.shift());else arr.unshift(arr.pop());
+ arr.forEach((t,i)=>{tiles[start+i]=t;t.id=start+i});
+ mood=['Calm','Restless','Wild'][rand(3)];
+ if(mood==='Restless'){let t=tiles[rand(12)];t.kind=rand(tileKinds.length);addLog('The Drift reshaped '+tileLabel(t)+'.')}
+ if(mood==='Wild'){let t=tiles[rand(12)];t.wealth++;addLog('A wild current charged one island with extra energy.')}
+ addLog(`The Drift pushed row ${row+1} ${dir}. The map has changed!`);
+}
+function takeTurn(){
+ if(gameOver)return;let p=players[current],t=tiles[selected],k=tileKinds[t.kind];
+ if(action==='harvest'){
+  let gain=k.yield+(t.wealth||0);if(t.kind===4){p.insight++;gain=Math.max(1,gain-1)}
+  p.shards+=gain;t.wealth=0;addLog(`${p.name} harvested ${gain} shard${gain===1?'':'s'} from ${k.name}.`);
+ }else if(action==='build'){
+  if(t.wonder){addLog(`${p.name} studied the wonder at ${k.name} instead of building. Gained 1 insight.`);p.insight++}
+  else if(p.shards<4){setEvent('Not enough shards','Building costs 4 shards. Harvest first, or explore to find a cache.');return}
+  else{p.shards-=4;t.wonder=true;t.owner=current;p.wonders++;p.points+=2;addLog(`${p.name} built a wonder on ${k.name}! It is worth points at the end.`)}
+ }else if(action==='explore'){
+  if(!t.known){t.known=true;let outcome=rand(5);if(outcome===0){p.shards+=4;addLog(`${p.name} discovered a hidden shard cache on ${k.name}: +4 shards!`)}
+   else if(outcome===1){p.insight+=2;addLog(`${p.name} decoded an ancient message: +2 insight!`)}
+   else if(outcome===2){p.points+=3;addLog(`${p.name} found a sky-map fragment: +3 points!`)}
+   else if(outcome===3){p.shards=Math.max(0,p.shards-1);p.insight+=3;addLog(`${p.name} woke a trickster spirit: lost 1 shard but gained 3 insight.`)}
+   else{p.points+=1;p.shards+=2;addLog(`${p.name} found a friendly wandering merchant: +1 point and +2 shards.`)}
+  }else{p.insight+=1;addLog(`${p.name} studied the known mystery at ${k.name}: +1 insight.`)}
+ }else if(action==='bend'){
+  if(p.insight<2){setEvent('You need more insight','Bending the Drift costs 2 insight. Explore a tile to uncover knowledge first.');return}
+  p.insight-=2;let other=rand(12);while(other===selected)other=rand(12);[tiles[selected],tiles[other]]=[tiles[other],tiles[selected]];tiles.forEach((x,i)=>x.id=i);addLog(`${p.name} bent the Drift, swapping two distant islands. Everyone’s plans may change!`);
+ }
+ // Tiny bonus for visiting different terrain: encourages movement and discovery.
+ if(!p.visited.includes(t.kind)){p.visited.push(t.kind);p.points++;addLog(`${p.name} charted a new kind of island: +1 discovery point.`)}
+ if(round>=8&&current===players.length-1){finish();return}
+ current++;if(current>=players.length){current=0;round++;drift();if(round>8){finish();return}}
+ selected=rand(12);
+ if(round===4){let t=tiles[rand(12)];t.wealth+=2;setEvent('☄️ Comet shower','A comet scattered extra shards across '+tileLabel(t)+'. Harvest there to claim the bonus.')}
+ else if(round===7){let t=tiles[rand(12)];t.kind=4;setEvent('🔮 The Starwell awakens','One island has become a Starwell. Explore or harvest it to prepare for the finale.')}
+ else setEvent('🌌 The Drift is moving','The island row shifted. Check the new map and adapt your plan.');
+ render();
+}
+function finish(){
+ gameOver=true;let sorted=players.slice().sort((a,b)=>score(b)-score(a));setEvent('🏆 The worlds settle',`${sorted[0].name} wins with ${score(sorted[0])} points! Wonders, insight, discoveries, and saved shards all count.`);
+ addLog('Final standings: '+sorted.map((p,i)=>`${i+1}. ${p.name} (${score(p)} pts)`).join(' · '));render();
+}
+function showRules(){setEvent('📖 How to play','Each explorer takes one action per turn for 8 rounds. Harvest earns shards; Build costs 4 shards and makes a wonder; Explore reveals a mystery once per tile; Bend costs 2 insight and swaps two islands. New terrain earns a discovery point. Highest final score wins. The Drift shifts a map row after every full round.')}
+document.querySelectorAll('[data-action]').forEach(b=>b.onclick=()=>{action=b.dataset.action;renderActions()});
+$('takeTurn').onclick=takeTurn;$('newGame').onclick=()=>{$('setup').style.display='flex'};$('begin').onclick=setupGame;$('rules').onclick=showRules;
+setEvent('🌠 The sky is quiet… for now','Choose a tile, then pick one action. The world shifts after every round.');
+})();
+</script>
+</body></html>
